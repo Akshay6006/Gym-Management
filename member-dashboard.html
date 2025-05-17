@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Member Dashboard - Gym Management</title>
+    <link rel="stylesheet" href="css/style-clean.css" />
+
+</head>
+<body class="member-dashboard-body">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>🏋️‍♂️ Gym Panel</h2>
+    <ul>
+      <li><a href="#profile">👤 Profile</a></li>
+      <li><a href="#progress">📊 Progress</a></li>
+      <li><a href="#schedule">🗓️ Schedule</a></li>
+      <li><a href="#quote">💬 Motivation</a></li>
+      <li><a href="#downloads">📥 Plans</a></li>
+      <li><a href="#notifications">🔔 Notifications</a></li>
+      <li><a href="#stats">📈 Stats</a></li>
+      <li><a href="#contact">📞 Contact</a></li>
+      <li><a href="#" onclick="logoutUser()">🚪 Logout</a></li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- 👤 Profile -->
+    <section id="profile" class="card section">
+      <h2>👤 Profile</h2>
+      <img id="profilePic" src="images/profile-placeholder.png" class="profile-pic" alt="Profile Picture" />
+
+<input type="file" id="profileUpload" accept="image/*" style="margin-top: 10px;" />
+<button onclick="uploadProfilePic()" class="btn">Upload Photo</button>
+<p id="uploadStatus" style="color: limegreen; margin-top: 8px;"></p>
+
+      <p><strong>Name:</strong> <span id="memberName">Loading...</span></p>
+      <p><strong>Email:</strong> <span id="memberEmail">Loading...</span></p>
+      <p><strong>Package:</strong> <span id="memberPackage">Loading...</span></p>
+    </section>
+
+    <!-- 📊 Progress -->
+    <section id="progress" class="card section">
+      <h2>📊 Weight Progress</h2>
+      <p>Current Weight: <strong>70kg</strong></p>
+      <progress value="70" max="100"></progress>
+    </section>
+
+    <!-- 🗓️ Schedule -->
+    <section id="schedule" class="card section">
+      <h2>🗓️ Workout Schedule</h2>
+      <ul>
+        <li>Monday: Chest + Triceps</li>
+        <li>Tuesday: Back + Biceps</li>
+        <li>Wednesday: Cardio + Core</li>
+        <li>Thursday: Legs + Shoulders</li>
+        <li>Friday: Arms</li>
+        <li>Saturday: Zumba / HIIT</li>
+        <li>Sunday: Rest</li>
+      </ul>
+    </section>
+
+    <!-- 💬 Quote -->
+    <section id="quote" class="card section">
+      <h2>💬 Motivation</h2>
+      <blockquote>"The pain you feel today will be the strength you feel tomorrow."</blockquote>
+    </section>
+
+   <!-- 📥 Downloads -->
+<section id="downloads" class="card section">
+  <h2>📥 Your Plans</h2>
+  <div id="downloadLinks">
+    <p>Loading your plan files...</p>
+  </div>
+</section>
+
+
+
+    <!-- 🔔 Notifications -->
+    <section id="notifications" class="card section">
+      <h2>🔔 Notifications</h2>
+      <ul id="notificationList">
+        <li>Loading notifications...</li>
+      </ul>
+    </section>
+
+    <!-- 📈 Stats -->
+    <section id="stats" class="card section">
+      <h2>📈 Your Gym Stats</h2>
+      <p>💥 Sessions Attended: <span id="statSessions">24</span></p>
+      <p>🔥 Calories Burned: <span id="statCalories">7,200</span></p>
+      <p>🕓 Active Days: <span id="statDays">45</span></p>
+    </section>
+
+    <!-- 📞 Contact -->
+    <section id="contact" class="card section">
+      <h2>📞 Contact Us</h2>
+      <p><strong>Address:</strong> The Shiromani Grand, Central Road, Pune</p>
+      <p><strong>Phone:</strong> +91 98765 43210</p>
+      <p><strong>Email:</strong> support@theshiromanigrand.com</p>
+    </section>
+
+  </div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+
+
+
+  <script>
+  // Animate numbers counting up
+  function animateCount(id, start, end, duration) {
+    let current = start;
+    const range = end - start;
+    const increment = end > start ? 1 : -1;
+    const stepTime = Math.abs(Math.floor(duration / range));
+    const obj = document.getElementById(id);
+
+    const timer = setInterval(() => {
+      current += increment;
+      obj.textContent = current.toLocaleString();
+      if (current === end) clearInterval(timer);
+    }, stepTime);
+  }
+
+  // Upload profile picture
+  function uploadProfilePic() {
+    const fileInput = document.getElementById("profileUpload");
+    const file = fileInput.files[0];
+    const status = document.getElementById("uploadStatus");
+
+    if (!file) return alert("Please select an image to upload.");
+
+    const user = auth.currentUser;
+    if (!user) return alert("User not logged in.");
+
+    status.textContent = "Uploading...";
+    status.style.color = "black";
+
+    const fileRef = storage.ref(`profile_pictures/${user.uid}/${file.name}`);
+
+    fileRef.put(file).then(() => fileRef.getDownloadURL())
+      .then(url => {
+        return db.collection("users").doc(user.uid).update({ profilePicURL: url })
+          .then(() => {
+            document.getElementById("profilePic").src = url;
+            status.textContent = "Profile photo uploaded successfully!";
+            status.style.color = "limegreen";
+          });
+      })
+      .catch(error => {
+        console.error("Upload error:", error.message);
+        status.textContent = "Upload failed: " + error.message;
+        status.style.color = "red";
+      });
+  }
+
+  // Main logic when user is logged in
+  auth.onAuthStateChanged(async user => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    try {
+      const doc = await db.collection("users").doc(user.uid).get();
+      const data = doc.data();
+
+      if (!data) throw new Error("User data not found.");
+
+      // Fill profile
+      document.getElementById("memberName").textContent = data.name;
+      document.getElementById("memberEmail").textContent = data.email;
+      document.getElementById("memberPackage").textContent = data.package;
+
+      // Load profile picture if exists
+      if (data.profilePicURL) {
+        document.getElementById("profilePic").src = data.profilePicURL;
+      }
+
+      // Animate stats (you can replace with real stats if stored)
+      animateCount("statSessions", 0, 24, 1500);
+      animateCount("statCalories", 0, 7200, 1500);
+      animateCount("statDays", 0, 45, 1500);
+
+           // Load notifications (simplified - no index required)
+      const snapshot = await db.collection("notifications")
+        .where("email", "==", user.email)
+        .limit(5)
+        .get();
+        const downloadSection = document.getElementById("downloadLinks");
+
+const packageType = (data.package || "").toLowerCase().replace(/\s+/g, "");
+const dietPath = `plans/${packageType}/diet.pdf`;
+const workoutPath = `plans/${packageType}/workout.pdf`;
+
+// Show dynamic download links
+downloadSection.innerHTML = `
+  <a href="${dietPath}" class="btn" download>🍎 Download Diet Plan</a>
+  <a href="${workoutPath}" class="btn" download style="margin-left: 10px;">💪 Download Workout Plan</a>
+`;
+
+
+
+      const list = document.getElementById("notificationList");
+      list.innerHTML = "";
+
+      if (snapshot.empty) {
+        list.innerHTML = "<li>No notifications yet.</li>";
+      } else {
+        snapshot.forEach(doc => {
+          const li = document.createElement("li");
+          li.textContent = doc.data().message;
+          list.appendChild(li);
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load user info:", err.message);
+      alert("❌ Failed to load dashboard: " + err.message);
+    }
+  });
+
+  // Expose upload function globally
+  window.uploadProfilePic = uploadProfilePic;
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manage Members - Gym Management</title>
+  <link rel="stylesheet" href="css/style-clean.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo">Gym Management</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="admin.html">Add Members</a>
+        <a href="member.html" class="active">Manage Members</a>
+        <a href="bill.html">Generate Bills</a>
+        <a href="view-bills.html">View Bills</a>
+        <a href="notify.html">Notify</a>
+        <a href="create-admin.html">➕ Create Admin</a>
+        <a href="#" onclick="logoutUser()">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Members Table -->
+  <div class="overlay">
+    <div class="card login-card" style="max-width: 800px;">
+      <h2 style="text-align: center;">All Members</h2>
+      <table style="width:100%; color: white;" id="membersTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Package</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows will be inserted here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = "login.html";
+    });
+
+    // Load all members
+    db.collection("users").where("role", "==", "member").onSnapshot(snapshot => {
+      const tableBody = document.querySelector("#membersTable tbody");
+      tableBody.innerHTML = "";
+      snapshot.forEach(doc => {
+        const member = doc.data();
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${member.name}</td>
+          <td>${member.email}</td>
+          <td>${member.phone}</td>
+          <td>${member.package}</td>
+          <td>${member.createdAt ? new Date(member.createdAt.toDate()).toLocaleDateString() : ''}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    });
+  </script>
+
+</body>
+</html>

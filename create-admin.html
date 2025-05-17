@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Admin - Gym Management</title>
+  <link rel="stylesheet" href="css/style-clean.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo">Gym Management</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="admin.html">Add Members</a>
+        <a href="member.html">Manage Members</a>
+        <a href="bill.html">Generate Bills</a>
+        <a href="view-bills.html">View Bills</a>
+        <a href="notify.html">Notify</a>
+        <a href="create-admin.html" class="active">➕ Create Admin</a>
+        <a href="view-admins.html">👑 View Admins</a>
+        <a href="#" onclick="logoutUser()">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Create Admin Form -->
+  <div class="overlay">
+    <div class="card login-card">
+      <h2 style="text-align:center;">Create New Admin</h2>
+
+      <input type="text" id="adminName" placeholder="Full Name" required />
+      <input type="email" id="adminEmail" placeholder="Admin Email" required />
+      <input type="password" id="adminPassword" placeholder="Password" required />
+
+      <button onclick="createAdmin()">Create Admin</button>
+      <p id="admin-status" style="text-align:center; color: red;"></p>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <!-- Firebase Config and Auth -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    // Protect page — only allow admins
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      db.collection("users").doc(user.uid).get().then(doc => {
+        const data = doc.data();
+        if (!doc.exists || data.role !== "admin") {
+          alert("Access denied: Admins only");
+          window.location.href = "member-dashboard.html";
+        }
+      });
+    });
+
+    function createAdmin() {
+      const name = document.getElementById("adminName").value.trim();
+      const email = document.getElementById("adminEmail").value.trim();
+      const password = document.getElementById("adminPassword").value;
+      const status = document.getElementById("admin-status");
+
+      if (!name || !email || !password) {
+        status.style.color = "red";
+        status.textContent = "Please fill in all fields.";
+        return;
+      }
+
+      // Create admin account
+      auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+
+          // Save to Firestore with admin role
+          return db.collection("users").doc(user.uid).set({
+            name,
+            email,
+            role: "admin",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        })
+        .then(() => {
+          alert("🎉 Admin created successfully!");
+          window.location.href = "index.html"; // Redirect to admin dashboard
+        })
+        .catch((error) => {
+          status.style.color = "red";
+          status.textContent = "❌ " + error.message;
+        });
+    }
+
+    // Expose function to global scope
+    window.createAdmin = createAdmin;
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Notify Members - Gym Management</title>
+  <link rel="stylesheet" href="css/style-clean.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo">Gym Management</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="admin.html">Add Members</a>
+        <a href="member.html">Manage Members</a>
+        <a href="bill.html">Generate Bills</a>
+        <a href="view-bills.html">View Bills</a>
+        <a href="notify.html" class="active">Notify</a>
+        <a href="create-admin.html">➕ Create Admin</a>
+        <a href="#" onclick="logoutUser()">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="overlay">
+    <div class="card login-card">
+      <h2 style="text-align:center;">Send Notification</h2>
+
+      <input type="email" id="notifyEmail" placeholder="Member Email (leave blank to send to all)" />
+      <textarea id="notificationMsg" placeholder="Enter your message..." rows="5" style="width:100%; margin: 10px 0;"></textarea>
+
+      <button onclick="sendNotification()">Send Notification</button>
+      <p id="notify-status" style="text-align:center; color:limegreen;"></p>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    function sendNotification() {
+      const email = document.getElementById("notifyEmail").value.trim();
+      const message = document.getElementById("notificationMsg").value.trim();
+      const status = document.getElementById("notify-status");
+
+      if (!message) {
+        status.style.color = "red";
+        status.textContent = "Please enter a message.";
+        return;
+      }
+
+      // Send to one specific member
+      if (email) {
+        db.collection("users").where("email", "==", email).where("role", "==", "member").get()
+          .then(snapshot => {
+            if (snapshot.empty) {
+              status.style.color = "red";
+              status.textContent = "❌ No member found with this email.";
+              return;
+            }
+
+            snapshot.forEach(doc => {
+              const user = doc.data();
+              console.log(`🔔 Sending to: ${user.email} => ${message}`);
+              // Add mock send here
+            });
+
+            status.style.color = "limegreen";
+            status.textContent = `✅ Notification sent to ${email}`;
+          });
+      } 
+      // Send to all members
+      else {
+        db.collection("users").where("role", "==", "member").get()
+          .then(snapshot => {
+            if (snapshot.empty) {
+              status.style.color = "red";
+              status.textContent = "No members to notify.";
+              return;
+            }
+
+            snapshot.forEach(doc => {
+              const user = doc.data();
+              console.log(`🔔 Sending to: ${user.email} => ${message}`);
+              // Add mock send here
+            });
+
+            status.style.color = "limegreen";
+            status.textContent = "✅ Notification sent to all members.";
+          });
+      }
+    }
+
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = "login.html";
+    });
+    auth.onAuthStateChanged(user => {
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  db.collection("users").doc(user.uid).get().then(doc => {
+    const data = doc.data();
+    if (!doc.exists || data.role !== "admin") {
+      alert("Access denied: Admins only");
+      window.location.href = "member-dashboard.html"; // redirect for members
+    }
+  });
+});
+
+  </script>
+
+</body>
+</html>

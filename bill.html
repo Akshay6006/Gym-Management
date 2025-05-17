@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generate Bill - Gym Management</title>
+  <link rel="stylesheet" href="css/style-clean.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo">Gym Management</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="admin.html">Add Members</a>
+        <a href="member.html">Manage Members</a>
+        <a href="bill.html" class="active">Generate Bills</a>
+        <a href="view-bills.html">View Bills</a>
+        <a href="notify.html">Notify</a>
+        <a href="create-admin.html">➕ Create Admin</a>
+        <a href="#" onclick="logoutUser()">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="overlay">
+    <div class="card login-card">
+      <h2 style="text-align:center;">Generate Bill</h2>
+
+      <input type="email" id="billEmail" placeholder="Member Email" required />
+      <input type="text" id="billPackage" placeholder="Package (Monthly/Yearly)" required />
+      <input type="number" id="billAmount" placeholder="Amount" required />
+
+      <button onclick="generateBill()">Generate</button>
+      <p id="bill-status" style="text-align:center; color: red;"></p>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = "login.html";
+    });
+
+    function generateBill() {
+      const email = document.getElementById("billEmail").value.trim();
+      const pkg = document.getElementById("billPackage").value.trim();
+      const amount = document.getElementById("billAmount").value.trim();
+      const status = document.getElementById("bill-status");
+
+      if (!email || !pkg || !amount) {
+        status.textContent = "Please fill in all fields.";
+        return;
+      }
+
+      db.collection("bills").add({
+        email,
+        package: pkg,
+        amount,
+        date: new Date()
+      }).then(() => {
+        status.style.color = "green";
+        status.textContent = "✅ Bill generated successfully!";
+      }).catch(error => {
+        status.style.color = "red";
+        status.textContent = "❌ " + error.message;
+      });
+    }
+    auth.onAuthStateChanged(user => {
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  db.collection("users").doc(user.uid).get().then(doc => {
+    const data = doc.data();
+    if (!doc.exists || data.role !== "admin") {
+      alert("Access denied: Admins only");
+      window.location.href = "member-dashboard.html"; // redirect for members
+    }
+  });
+});
+
+  </script>
+
+</body>
+</html>
