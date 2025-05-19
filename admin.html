@@ -5,64 +5,54 @@
   <title>Add Member - Gym Management</title>
   <link rel="stylesheet" href="css/style-clean.css" />
 </head>
-<body>
+<body class="member-dashboard-body">
 
-  <!-- Navigation Bar -->
-  <nav class="navbar">
-    <div class="nav-container">
-      <a href="#" class="nav-logo">Gym Management</a>
-      <div class="nav-links">
-        <a href="index.html">Dashboard</a>
-        <a href="admin.html" class="active">Add Members</a>
-        <a href="member.html">Manage Members</a>
-        <a href="bill.html">Generate Bills</a>
-        <a href="view-bills.html">View Bills</a>
-        <a href="notify.html">Notify</a>
-        <a href="create-admin.html">➕ Create Admin</a>
-        <a href="#" onclick="logoutUser()">Logout</a>
-      </div>
-    </div>
-  </nav>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>🏋️ Admin Panel</h2>
+    <ul>
+      <li><a href="index.html">🏠 Dashboard</a></li>
+      <li><a href="admin.html" class="active">➕ Add Member</a></li>
+      <li><a href="member.html">👥 Manage Members</a></li>
+      <li><a href="bill.html">🧾 Generate Bills</a></li>
+      <li><a href="view-bills.html">📂 View Bills</a></li>
+      <li><a href="notify.html">📢 Notify</a></li>
+      <li><a href="create-admin.html">👤 Create Admin</a></li>
+      <li><a href="#" onclick="logoutUser()">🚪 Logout</a></li>
+    </ul>
+  </div>
 
   <!-- Main Form -->
-  <div class="overlay">
-    <div class="card login-card">
-      <h2 style="text-align:center;">Add Member</h2>
+  <div class="main-content">
+    <section class="card section">
+      <h2>➕ Add Member</h2>
 
       <input type="text" id="memberName" placeholder="Full Name" required />
       <input type="email" id="memberEmail" placeholder="Email" required />
       <input type="text" id="memberPhone" placeholder="Phone Number" required />
-      <input type="text" id="memberPackage" placeholder="Package (e.g. Monthly, Yearly)" required />
+      <input type="text" id="memberPackage" placeholder="Package (Monthly/Yearly)" required />
 
       <button onclick="addMember()">Add Member</button>
-      <p id="member-status" style="text-align:center; margin-top: 10px;"></p>
-    </div>
+      <p id="member-status" style="margin-top: 10px;"></p>
+    </section>
   </div>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
-  <!-- Project Scripts -->
   <script src="js/firebase-config.js"></script>
   <script src="js/auth.js"></script>
 
-  <!-- Page Script -->
+  <!-- Add Member Script -->
   <script>
     auth.onAuthStateChanged(async user => {
-      if (!user) {
-        window.location.href = "login.html";
-        return;
-      }
+      if (!user) return location.href = "login.html";
 
-      // Only allow admins
       const doc = await db.collection("users").doc(user.uid).get();
-      const data = doc.data();
-      if (!doc.exists || data.role !== "admin") {
-        alert("Access denied: Admins only");
-        window.location.href = "member-dashboard.html";
-        return;
+      if (!doc.exists || doc.data().role !== "admin") {
+        alert("Access denied. Admins only.");
+        return location.href = "member-dashboard.html";
       }
     });
 
@@ -75,11 +65,10 @@
 
       if (!name || !email || !phone || !packageType) {
         status.style.color = "red";
-        status.textContent = "❌ Please fill in all fields.";
+        status.textContent = "❌ Please fill all fields.";
         return;
       }
 
-      // ✅ Correct: Write to 'users' collection with role: 'member'
       db.collection("users").add({
         name,
         email,
@@ -97,7 +86,7 @@
         document.getElementById("memberPackage").value = "";
       })
       .catch(error => {
-        console.error("Error adding member:", error.message);
+        console.error(error);
         status.style.color = "red";
         status.textContent = "❌ " + error.message;
       });

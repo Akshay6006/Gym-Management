@@ -2,51 +2,76 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard - Gym Management</title>
+  <title>Admin Dashboard - Gym Management</title>
   <link rel="stylesheet" href="css/style-clean.css" />
 </head>
-<body>
+<body class="member-dashboard-body">
 
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div class="nav-container">
-      <a href="#" class="nav-logo">Gym Management</a>
-      <div class="nav-links">
-        <a href="index.html" class="active">Dashboard</a>
-        <a href="admin.html">Add Members</a>
-        <a href="member.html">Manage Members</a>
-        <a href="bill.html">Generate Bills</a>
-        <a href="view-bills.html">View Bills</a>
-        <a href="notify.html">Notify</a>
-        <a href="create-admin.html">➕ Create Admin</a>
-        <a href="#" onclick="logoutUser()">Logout</a>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>🏋️ Admin Panel</h2>
+    <ul>
+      <li><a href="admin.html">➕ Add Member</a></li>
+      <li><a href="member.html">👥 Manage Members</a></li>
+      <li><a href="bill.html">🧾 Generate Bills</a></li>
+      <li><a href="view-bills.html">📂 View Bills</a></li>
+      <li><a href="notify.html">📢 Notify</a></li>
+      <li><a href="create-admin.html">👤 Create Admin</a></li>
+      <li><a href="#" onclick="logoutUser()">🚪 Logout</a></li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <section class="card section">
+      <h2>Welcome, Admin 👋</h2>
+      <p>This is your dashboard. Use the side panel to manage the gym system.</p>
+    </section>
+
+    <section class="dashboard-cards">
+      <div class="stat-card">
+        <h3>💪 Members</h3>
+        <p id="memberCount">Loading...</p>
       </div>
-    </div>
-  </nav>
-
-  <!-- Dashboard Welcome -->
-  <div class="overlay">
-    <div class="card login-card" style="max-width: 600px; text-align: center;">
-      <h2>Welcome, Admin!</h2>
-      <p>Use the navigation above to manage your gym efficiently.</p>
-    </div>
+      <div class="stat-card">
+        <h3>🧾 Bills</h3>
+        <p id="billCount">Loading...</p>
+      </div>
+      <div class="stat-card">
+        <h3>📢 Notifications Sent</h3>
+        <p id="notifCount">Loading...</p>
+      </div>
+    </section>
   </div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
   <script src="js/firebase-config.js"></script>
   <script src="js/auth.js"></script>
 
   <script>
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "login.html";
+    auth.onAuthStateChanged(async user => {
+      if (!user) return location.href = "login.html";
+
+      const doc = await db.collection("users").doc(user.uid).get();
+      if (!doc.exists || doc.data().role !== "admin") {
+        alert("Access Denied. Admins only.");
+        return location.href = "member-dashboard.html";
       }
+
+      // Load stats
+      db.collection("users").where("role", "==", "member").get().then(snap => {
+        document.getElementById("memberCount").textContent = snap.size;
+      });
+      db.collection("bills").get().then(snap => {
+        document.getElementById("billCount").textContent = snap.size;
+      });
+      db.collection("notifications").get().then(snap => {
+        document.getElementById("notifCount").textContent = snap.size;
+      });
     });
   </script>
-
 </body>
 </html>

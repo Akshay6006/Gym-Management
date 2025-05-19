@@ -1,21 +1,23 @@
-// Initialize Firebase Auth and Firestore
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// ✅ Login function
 function loginUser() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
   const errorBox = document.getElementById("error-msg");
 
-  errorBox.style.color = "black";
   errorBox.textContent = "Logging in...";
 
   auth.signInWithEmailAndPassword(email, password)
-    .then(() => {
+    .then(async (userCredential) => {
+      const doc = await db.collection("users").doc(userCredential.user.uid).get();
+      const role = doc.data().role;
       errorBox.style.color = "green";
       errorBox.textContent = "Login successful! Redirecting...";
-      setTimeout(() => window.location.href = "index.html", 1000);
+      setTimeout(() => {
+        if (role === "admin") {
+          window.location.href = "index.html";
+        } else {
+          window.location.href = "member-dashboard.html";
+        }
+      }, 1000);
     })
     .catch(error => {
       errorBox.style.color = "red";
@@ -23,7 +25,6 @@ function loginUser() {
     });
 }
 
-// ✅ Signup/Register function
 function registerUser() {
   const name = document.getElementById("name").value.trim();
   const email = document.getElementById("signup-email").value.trim();
@@ -33,17 +34,15 @@ function registerUser() {
   const status = document.getElementById("signup-status");
 
   if (!name || !email || !password || !phone || !packageType) {
-    status.style.color = "red";
     status.textContent = "❌ Please fill in all fields.";
+    status.style.color = "red";
     return;
   }
 
   auth.createUserWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
-
-      // ✅ Save using UID to match security rules
-      return db.collection("users").doc(user.uid).set({
+    .then(userCredential => {
+      const uid = userCredential.user.uid;
+      return db.collection("users").doc(uid).set({
         name,
         email,
         phone,
@@ -54,40 +53,27 @@ function registerUser() {
     })
     .then(() => {
       status.style.color = "limegreen";
-      status.textContent = "";
-      alert("🎉 Account created!");
-      window.location.href = "login.html";
+      status.textContent = "🎉 Account created! Redirecting...";
+      setTimeout(() => window.location.href = "login.html", 1500);
     })
-    .catch((error) => {
-      console.error("Signup Error:", error.message);
+    .catch(error => {
+      status.textContent = "❌ " + error.message;
       status.style.color = "red";
-      status.textContent = `Error: ${error.message}`;
     });
 }
 
-// ✅ Forgot Password function
 function resetPassword() {
   const email = prompt("Enter your email to reset your password:");
   if (!email) return;
-
   auth.sendPasswordResetEmail(email)
-    .then(() => alert("✅ Password reset link sent to your email."))
-    .catch((error) => {
-      console.error("Reset password error:", error.message);
-      alert("❌ " + error.message);
-    });
+    .then(() => alert("✅ Password reset link sent!"))
+    .catch(error => alert("❌ " + error.message));
 }
 
-// ✅ Logout function
 function logoutUser() {
-  auth.signOut().then(() => {
-    window.location.href = "login.html";
-  }).catch(error => {
-    alert("❌ Logout failed: " + error.message);
-  });
+  auth.signOut().then(() => window.location.href = "login.html");
 }
 
-// ✅ Expose functions globally
 window.loginUser = loginUser;
 window.registerUser = registerUser;
 window.resetPassword = resetPassword;
