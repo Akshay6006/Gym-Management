@@ -5,104 +5,98 @@
   <title>View Bills - Gym Management</title>
   <link rel="stylesheet" href="css/style-clean.css" />
 </head>
-<body>
+<body class="admin-dashboard-body">
 
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div class="nav-container">
-      <a href="#" class="nav-logo">Gym Management</a>
-      <div class="nav-links">
-        <a href="index.html">Dashboard</a>
-        <a href="admin.html">Add Members</a>
-        <a href="member.html">Manage Members</a>
-        <a href="bill.html">Generate Bills</a>
-        <a href="view-bills.html" class="active">View Bills</a>
-        <a href="notify.html">Notify</a>
-        <a href="create-admin.html">➕ Create Admin</a>
-        <a href="#" onclick="logoutUser()">Logout</a>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>🏋️‍♂️ Admin Panel</h2>
+    <ul>
+      <li><a href="index.html">🏠 Dashboard</a></li>
+      <li><a href="admin.html">➕ Add Member</a></li>
+      <li><a href="member.html">👥 Manage Members</a></li>
+      <li><a href="bill.html">🧾 Generate Bills</a></li>
+      <li><a href="view-bills.html" class="active">📂 View Bills</a></li>
+      <li><a href="notify.html">📢 Notify</a></li>
+      <li><a href="#" onclick="logoutUser()">🚪 Logout</a></li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <section class="card section">
+      <h2>📂 All Bills</h2>
+      <button class="btn" onclick="exportBillsToCSV()">⬇️ Export as CSV</button>
+
+      <div style="overflow-x:auto; margin-top: 20px;">
+        <table style="width:100%; color: white;" id="billsTable">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Amount</th>
+              <th>Month</th>
+              <th>Generated On</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Bill rows will go here -->
+          </tbody>
+        </table>
       </div>
-    </div>
-  </nav>
-
-  <!-- Main -->
-  <div class="overlay">
-    <div class="card login-card" style="max-width: 700px;">
-      <h2>Billing History</h2>
-      <table id="billsTable" style="width:100%; color:white;">
-        <button onclick="exportBillsToCSV()" class="btn">⬇ Export Bills to CSV</button>
-
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Package</th>
-            <th>Amount</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Bills will be rendered here -->
-        </tbody>
-      </table>
-    </div>
+    </section>
   </div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
   <script src="js/firebase-config.js"></script>
   <script src="js/auth.js"></script>
 
   <script>
     auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "login.html";
-      }
+      if (!user) window.location.href = "login.html";
     });
 
-    db.collection("bills").orderBy("date", "desc").onSnapshot(snapshot => {
-      const tbody = document.querySelector("#billsTable tbody");
-      tbody.innerHTML = "";
+    db.collection("bills").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+      const tableBody = document.querySelector("#billsTable tbody");
+      tableBody.innerHTML = "";
       snapshot.forEach(doc => {
-        const bill = doc.data();
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${bill.email}</td>
-          <td>${bill.package}</td>
-          <td>${bill.amount}</td>
-          <td>${new Date(bill.date.toDate()).toLocaleDateString()}</td>
-        `;
-        tbody.appendChild(row);
+        const b = doc.data();
+        const row = `
+          <tr>
+            <td>${b.email}</td>
+            <td>₹${b.amount}</td>
+            <td>${b.month}</td>
+            <td>${b.createdAt ? new Date(b.createdAt.toDate()).toLocaleString() : 'N/A'}</td>
+          </tr>`;
+        tableBody.innerHTML += row;
       });
     });
+
     function exportBillsToCSV() {
-  db.collection("bills").get().then(snapshot => {
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Name,Email,Package,Amount,Billing Date\n";
+      const rows = [["Email", "Amount", "Month", "Created At"]];
+      db.collection("bills").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const b = doc.data();
+          rows.push([
+            b.email,
+            b.amount,
+            b.month,
+            b.createdAt ? new Date(b.createdAt.toDate()).toLocaleString() : ""
+          ]);
+        });
 
-    snapshot.forEach(doc => {
-      const bill = doc.data();
-      const row = [
-        bill.name,
-        bill.email,
-        bill.package,
-        bill.amount,
-        new Date(bill.date?.toDate()).toLocaleDateString()
-      ].join(",");
-      csvContent += row + "\n";
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "gym_bills.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  });
-}
-
+        const csvContent = rows.map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", "gym_bills.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    }
   </script>
 
 </body>

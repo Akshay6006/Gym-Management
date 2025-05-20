@@ -7,27 +7,24 @@
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div class="nav-container">
-      <a href="#" class="nav-logo">Gym Management</a>
-      <div class="nav-links">
-        <a href="index.html">Dashboard</a>
-        <a href="admin.html">Add Members</a>
-        <a href="member.html" class="active">Manage Members</a>
-        <a href="bill.html">Generate Bills</a>
-        <a href="view-bills.html">View Bills</a>
-        <a href="notify.html">Notify</a>
-        <a href="create-admin.html">➕ Create Admin</a>
-        <a href="#" onclick="logoutUser()">Logout</a>
-      </div>
-    </div>
-  </nav>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>🏋️ Admin Panel</h2>
+    <ul>
+      <li><a href="index.html">🏠 Dashboard</a></li>
+      <li><a href="admin.html">➕ Add Member</a></li>
+      <li><a class="active" href="member.html">👥 Manage Members</a></li>
+      <li><a href="bill.html">🧾 Generate Bills</a></li>
+      <li><a href="view-bills.html">📁 View Bills</a></li>
+      <li><a href="notify.html">📢 Notify</a></li>
+      <li><a href="#" onclick="logoutUser()">📤 Logout</a></li>
+    </ul>
+  </div>
 
-  <!-- Members Table -->
-  <div class="overlay">
-    <div class="card login-card" style="max-width: 800px;">
-      <h2 style="text-align: center;">All Members</h2>
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="card section">
+      <h2>👥 All Members</h2>
       <table style="width:100%; color: white;" id="membersTable">
         <thead>
           <tr>
@@ -39,7 +36,7 @@
           </tr>
         </thead>
         <tbody>
-          <!-- Rows will be inserted here -->
+          <!-- Fetched rows will go here -->
         </tbody>
       </table>
     </div>
@@ -49,30 +46,37 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
   <script src="js/firebase-config.js"></script>
   <script src="js/auth.js"></script>
 
+  <!-- Load Members -->
   <script>
     auth.onAuthStateChanged(user => {
-      if (!user) window.location.href = "login.html";
-    });
+      if (!user) return (window.location.href = "login.html");
 
-    // Load all members
-    db.collection("users").where("role", "==", "member").onSnapshot(snapshot => {
-      const tableBody = document.querySelector("#membersTable tbody");
-      tableBody.innerHTML = "";
-      snapshot.forEach(doc => {
-        const member = doc.data();
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${member.name}</td>
-          <td>${member.email}</td>
-          <td>${member.phone}</td>
-          <td>${member.package}</td>
-          <td>${member.createdAt ? new Date(member.createdAt.toDate()).toLocaleDateString() : ''}</td>
-        `;
-        tableBody.appendChild(row);
+      db.collection("users").doc(user.uid).get().then(doc => {
+        if (!doc.exists || doc.data().role !== "admin") {
+          alert("Access denied: Admins only.");
+          return (window.location.href = "login.html");
+        }
+
+        db.collection("users").where("role", "==", "member")
+          .onSnapshot(snapshot => {
+            const tableBody = document.querySelector("#membersTable tbody");
+            tableBody.innerHTML = "";
+            snapshot.forEach(doc => {
+              const member = doc.data();
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                <td>${member.name}</td>
+                <td>${member.email}</td>
+                <td>${member.phone}</td>
+                <td>${member.package}</td>
+                <td>${member.createdAt ? new Date(member.createdAt.toDate()).toLocaleDateString() : ""}</td>
+              `;
+              tableBody.appendChild(row);
+            });
+          });
       });
     });
   </script>

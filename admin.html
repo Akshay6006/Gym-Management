@@ -2,57 +2,55 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Add Member - Gym Management</title>
+  <title>Add Member - Admin Panel</title>
   <link rel="stylesheet" href="css/style-clean.css" />
 </head>
-<body class="member-dashboard-body">
+<body class="admin-dashboard-body">
 
   <!-- Sidebar -->
   <div class="sidebar">
-    <h2>🏋️ Admin Panel</h2>
+    <h2>🏋️‍♂️ Admin Panel</h2>
     <ul>
       <li><a href="index.html">🏠 Dashboard</a></li>
       <li><a href="admin.html" class="active">➕ Add Member</a></li>
       <li><a href="member.html">👥 Manage Members</a></li>
-      <li><a href="bill.html">🧾 Generate Bills</a></li>
-      <li><a href="view-bills.html">📂 View Bills</a></li>
+      <li><a href="bill.html">📄 Generate Bills</a></li>
+      <li><a href="view-bills.html">📁 View Bills</a></li>
       <li><a href="notify.html">📢 Notify</a></li>
-      <li><a href="create-admin.html">👤 Create Admin</a></li>
       <li><a href="#" onclick="logoutUser()">🚪 Logout</a></li>
     </ul>
   </div>
 
-  <!-- Main Form -->
+  <!-- Main Content -->
   <div class="main-content">
-    <section class="card section">
+    <div class="card section">
       <h2>➕ Add Member</h2>
-
       <input type="text" id="memberName" placeholder="Full Name" required />
       <input type="email" id="memberEmail" placeholder="Email" required />
       <input type="text" id="memberPhone" placeholder="Phone Number" required />
       <input type="text" id="memberPackage" placeholder="Package (Monthly/Yearly)" required />
-
-      <button onclick="addMember()">Add Member</button>
+      <button onclick="addMember()" class="btn">Add Member</button>
       <p id="member-status" style="margin-top: 10px;"></p>
-    </section>
+    </div>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
   <script src="js/firebase-config.js"></script>
   <script src="js/auth.js"></script>
 
-  <!-- Add Member Script -->
   <script>
     auth.onAuthStateChanged(async user => {
-      if (!user) return location.href = "login.html";
+      if (!user) return window.location.href = "login.html";
 
       const doc = await db.collection("users").doc(user.uid).get();
-      if (!doc.exists || doc.data().role !== "admin") {
-        alert("Access denied. Admins only.");
-        return location.href = "member-dashboard.html";
+      const data = doc.data();
+      if (!doc.exists || data.role !== "admin") {
+        alert("Access Denied: Admins Only");
+        window.location.href = "member-dashboard.html";
       }
     });
 
@@ -65,7 +63,7 @@
 
       if (!name || !email || !phone || !packageType) {
         status.style.color = "red";
-        status.textContent = "❌ Please fill all fields.";
+        status.textContent = "❌ Please fill in all fields.";
         return;
       }
 
@@ -76,22 +74,18 @@
         package: packageType,
         role: "member",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      })
-      .then(() => {
+      }).then(() => {
         status.style.color = "limegreen";
         status.textContent = "✅ Member added successfully!";
         document.getElementById("memberName").value = "";
         document.getElementById("memberEmail").value = "";
         document.getElementById("memberPhone").value = "";
         document.getElementById("memberPackage").value = "";
-      })
-      .catch(error => {
-        console.error(error);
+      }).catch(error => {
         status.style.color = "red";
         status.textContent = "❌ " + error.message;
       });
     }
   </script>
-
 </body>
 </html>

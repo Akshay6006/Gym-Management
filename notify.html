@@ -2,119 +2,81 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Notify Members - Gym Management</title>
+  <title>Send Notifications - Gym Management</title>
   <link rel="stylesheet" href="css/style-clean.css" />
 </head>
-<body>
+<body class="admin-dashboard-body">
 
-  <nav class="navbar">
-    <div class="nav-container">
-      <a href="#" class="nav-logo">Gym Management</a>
-      <div class="nav-links">
-        <a href="index.html">Dashboard</a>
-        <a href="admin.html">Add Members</a>
-        <a href="member.html">Manage Members</a>
-        <a href="bill.html">Generate Bills</a>
-        <a href="view-bills.html">View Bills</a>
-        <a href="notify.html" class="active">Notify</a>
-        <a href="create-admin.html">➕ Create Admin</a>
-        <a href="#" onclick="logoutUser()">Logout</a>
-      </div>
-    </div>
-  </nav>
-
-  <div class="overlay">
-    <div class="card login-card">
-      <h2 style="text-align:center;">Send Notification</h2>
-
-      <input type="email" id="notifyEmail" placeholder="Member Email (leave blank to send to all)" />
-      <textarea id="notificationMsg" placeholder="Enter your message..." rows="5" style="width:100%; margin: 10px 0;"></textarea>
-
-      <button onclick="sendNotification()">Send Notification</button>
-      <p id="notify-status" style="text-align:center; color:limegreen;"></p>
-    </div>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>🏋️‍♂️ Admin Panel</h2>
+    <ul>
+      <li><a href="index.html">🏠 Dashboard</a></li>
+      <li><a href="admin.html">➕ Add Member</a></li>
+      <li><a href="member.html">👥 Manage Members</a></li>
+      <li><a href="bill.html">🧾 Generate Bills</a></li>
+      <li><a href="view-bills.html">📂 View Bills</a></li>
+      <li><a href="notify.html" class="active">📢 Notify</a></li>
+      <li><a href="#" onclick="logoutUser()">🚪 Logout</a></li>
+    </ul>
   </div>
 
-  <!-- Firebase -->
+  <!-- Main Content -->
+  <div class="main-content">
+    <section class="card section">
+      <h2>📢 Send Notification</h2>
+
+      <input type="text" id="notifyEmail" placeholder="Member Email (or leave blank for all)" />
+      <textarea id="message" rows="4" placeholder="Enter your message here..." style="width:100%; margin-top:10px;"></textarea>
+      <button class="btn" onclick="sendNotification()">Send</button>
+      <p id="notify-status" style="margin-top: 10px;"></p>
+    </section>
+  </div>
+
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
   <script src="js/firebase-config.js"></script>
   <script src="js/auth.js"></script>
 
   <script>
+    auth.onAuthStateChanged(user => {
+      if (!user) return window.location.href = "login.html";
+    });
+
     function sendNotification() {
       const email = document.getElementById("notifyEmail").value.trim();
-      const message = document.getElementById("notificationMsg").value.trim();
+      const message = document.getElementById("message").value.trim();
       const status = document.getElementById("notify-status");
 
       if (!message) {
         status.style.color = "red";
-        status.textContent = "Please enter a message.";
+        status.textContent = "❌ Message cannot be empty.";
         return;
       }
 
-      // Send to one specific member
+      const data = {
+        message,
+        sentAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
       if (email) {
-        db.collection("users").where("email", "==", email).where("role", "==", "member").get()
-          .then(snapshot => {
-            if (snapshot.empty) {
-              status.style.color = "red";
-              status.textContent = "❌ No member found with this email.";
-              return;
-            }
-
-            snapshot.forEach(doc => {
-              const user = doc.data();
-              console.log(`🔔 Sending to: ${user.email} => ${message}`);
-              // Add mock send here
-            });
-
-            status.style.color = "limegreen";
-            status.textContent = `✅ Notification sent to ${email}`;
-          });
-      } 
-      // Send to all members
-      else {
-        db.collection("users").where("role", "==", "member").get()
-          .then(snapshot => {
-            if (snapshot.empty) {
-              status.style.color = "red";
-              status.textContent = "No members to notify.";
-              return;
-            }
-
-            snapshot.forEach(doc => {
-              const user = doc.data();
-              console.log(`🔔 Sending to: ${user.email} => ${message}`);
-              // Add mock send here
-            });
-
-            status.style.color = "limegreen";
-            status.textContent = "✅ Notification sent to all members.";
-          });
+        data.email = email;
       }
+
+      db.collection("notifications").add(data)
+        .then(() => {
+          status.style.color = "limegreen";
+          status.textContent = "✅ Notification sent!";
+          document.getElementById("message").value = "";
+          document.getElementById("notifyEmail").value = "";
+        })
+        .catch(err => {
+          status.style.color = "red";
+          status.textContent = "❌ " + err.message;
+        });
     }
-
-    auth.onAuthStateChanged(user => {
-      if (!user) window.location.href = "login.html";
-    });
-    auth.onAuthStateChanged(user => {
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  db.collection("users").doc(user.uid).get().then(doc => {
-    const data = doc.data();
-    if (!doc.exists || data.role !== "admin") {
-      alert("Access denied: Admins only");
-      window.location.href = "member-dashboard.html"; // redirect for members
-    }
-  });
-});
-
   </script>
 
 </body>

@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Member Dashboard - Gym Management</title>
-    <link rel="stylesheet" href="css/style-clean.css" />
-
+  <link rel="stylesheet" href="css/style-clean.css" />
 </head>
 <body class="member-dashboard-body">
 
@@ -26,15 +25,13 @@
 
   <!-- Main Content -->
   <div class="main-content">
-
     <!-- 👤 Profile -->
     <section id="profile" class="card section">
       <h2>👤 Profile</h2>
-      <img id="profilePic" src="images/profile-placeholder.png" class="profile-pic" alt="Profile Picture" />
-
-<input type="file" id="profileUpload" accept="image/*" style="margin-top: 10px;" />
-<button onclick="uploadProfilePic()" class="btn">Upload Photo</button>
-<p id="uploadStatus" style="color: limegreen; margin-top: 8px;"></p>
+      <img id="profilePic" src="pics/1.jpg" class="profile-pic" alt="Profile Picture" />
+      <input type="file" id="profileUpload" accept="image/*" />
+      <button onclick="uploadProfilePic()" class="btn">Upload Photo</button>
+      <p id="uploadStatus"></p>
 
       <p><strong>Name:</strong> <span id="memberName">Loading...</span></p>
       <p><strong>Email:</strong> <span id="memberEmail">Loading...</span></p>
@@ -68,168 +65,143 @@
       <blockquote>"The pain you feel today will be the strength you feel tomorrow."</blockquote>
     </section>
 
-   <!-- 📥 Downloads -->
-<section id="downloads" class="card section">
-  <h2>📥 Your Plans</h2>
-  <div id="downloadLinks">
-    <p>Loading your plan files...</p>
-  </div>
-</section>
-
-
+    <!-- 📥 Downloads -->
+    <section id="downloads" class="card section">
+      <h2>📥 Your Plans</h2>
+      <div id="downloadLinks"><p>Loading...</p></div>
+    </section>
 
     <!-- 🔔 Notifications -->
     <section id="notifications" class="card section">
       <h2>🔔 Notifications</h2>
       <ul id="notificationList">
-        <li>Loading notifications...</li>
+        <li>Loading...</li>
       </ul>
     </section>
 
     <!-- 📈 Stats -->
     <section id="stats" class="card section">
       <h2>📈 Your Gym Stats</h2>
-      <p>💥 Sessions Attended: <span id="statSessions">24</span></p>
-      <p>🔥 Calories Burned: <span id="statCalories">7,200</span></p>
-      <p>🕓 Active Days: <span id="statDays">45</span></p>
+      <p>💥 Sessions Attended: <span id="statSessions">0</span></p>
+      <p>🔥 Calories Burned: <span id="statCalories">0</span></p>
+      <p>🕓 Active Days: <span id="statDays">0</span></p>
     </section>
 
     <!-- 📞 Contact -->
     <section id="contact" class="card section">
       <h2>📞 Contact Us</h2>
-      <p><strong>Address:</strong> The Shiromani Grand, Central Road, Pune</p>
-      <p><strong>Phone:</strong> +91 98765 43210</p>
-      <p><strong>Email:</strong> support@theshiromanigrand.com</p>
+      <p><strong>Address:</strong> Bengaluru, Karnataka</p>
+      <p><strong>Phone:</strong> +91 7321946006</p>
+      <p><strong>Email:</strong> support@gymmgmt.com</p>
     </section>
-
   </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
-<script src="js/firebase-config.js"></script>
-<script src="js/auth.js"></script>
-
-
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
 
   <script>
-  // Animate numbers counting up
-  function animateCount(id, start, end, duration) {
-    let current = start;
-    const range = end - start;
-    const increment = end > start ? 1 : -1;
-    const stepTime = Math.abs(Math.floor(duration / range));
-    const obj = document.getElementById(id);
+    function animateCount(id, start, end, duration) {
+      const obj = document.getElementById(id);
+      let current = start;
+      const range = end - start;
+      const increment = range > 0 ? 1 : -1;
+      const stepTime = Math.abs(Math.floor(duration / range));
 
-    const timer = setInterval(() => {
-      current += increment;
-      obj.textContent = current.toLocaleString();
-      if (current === end) clearInterval(timer);
-    }, stepTime);
-  }
-
-  // Upload profile picture
-  function uploadProfilePic() {
-    const fileInput = document.getElementById("profileUpload");
-    const file = fileInput.files[0];
-    const status = document.getElementById("uploadStatus");
-
-    if (!file) return alert("Please select an image to upload.");
-
-    const user = auth.currentUser;
-    if (!user) return alert("User not logged in.");
-
-    status.textContent = "Uploading...";
-    status.style.color = "black";
-
-    const fileRef = storage.ref(`profile_pictures/${user.uid}/${file.name}`);
-
-    fileRef.put(file).then(() => fileRef.getDownloadURL())
-      .then(url => {
-        return db.collection("users").doc(user.uid).update({ profilePicURL: url })
-          .then(() => {
-            document.getElementById("profilePic").src = url;
-            status.textContent = "Profile photo uploaded successfully!";
-            status.style.color = "limegreen";
-          });
-      })
-      .catch(error => {
-        console.error("Upload error:", error.message);
-        status.textContent = "Upload failed: " + error.message;
-        status.style.color = "red";
-      });
-  }
-
-  // Main logic when user is logged in
-  auth.onAuthStateChanged(async user => {
-    if (!user) {
-      window.location.href = "login.html";
-      return;
+      const timer = setInterval(() => {
+        current += increment;
+        obj.textContent = current;
+        if (current === end) clearInterval(timer);
+      }, stepTime);
     }
 
-    try {
-      const doc = await db.collection("users").doc(user.uid).get();
-      const data = doc.data();
+    function uploadProfilePic() {
+      const file = document.getElementById("profileUpload").files[0];
+      const status = document.getElementById("uploadStatus");
+      const user = auth.currentUser;
 
-      if (!data) throw new Error("User data not found.");
-
-      // Fill profile
-      document.getElementById("memberName").textContent = data.name;
-      document.getElementById("memberEmail").textContent = data.email;
-      document.getElementById("memberPackage").textContent = data.package;
-
-      // Load profile picture if exists
-      if (data.profilePicURL) {
-        document.getElementById("profilePic").src = data.profilePicURL;
+      if (!file || !user) {
+        alert("Please select a file and ensure you're logged in.");
+        return;
       }
 
-      // Animate stats (you can replace with real stats if stored)
-      animateCount("statSessions", 0, 24, 1500);
-      animateCount("statCalories", 0, 7200, 1500);
-      animateCount("statDays", 0, 45, 1500);
-
-           // Load notifications (simplified - no index required)
-      const snapshot = await db.collection("notifications")
-        .where("email", "==", user.email)
-        .limit(5)
-        .get();
-        const downloadSection = document.getElementById("downloadLinks");
-
-const packageType = (data.package || "").toLowerCase().replace(/\s+/g, "");
-const dietPath = `plans/${packageType}/diet.pdf`;
-const workoutPath = `plans/${packageType}/workout.pdf`;
-
-// Show dynamic download links
-downloadSection.innerHTML = `
-  <a href="${dietPath}" class="btn" download>🍎 Download Diet Plan</a>
-  <a href="${workoutPath}" class="btn" download style="margin-left: 10px;">💪 Download Workout Plan</a>
-`;
-
-
-
-      const list = document.getElementById("notificationList");
-      list.innerHTML = "";
-
-      if (snapshot.empty) {
-        list.innerHTML = "<li>No notifications yet.</li>";
-      } else {
-        snapshot.forEach(doc => {
-          const li = document.createElement("li");
-          li.textContent = doc.data().message;
-          list.appendChild(li);
+      const ref = storage.ref(`profile_pictures/${user.uid}/${file.name}`);
+      status.textContent = "Uploading...";
+      ref.put(file)
+        .then(() => ref.getDownloadURL())
+        .then(url => {
+          document.getElementById("profilePic").src = url;
+          return db.collection("users").doc(user.uid).update({ profilePicURL: url });
+        })
+        .then(() => {
+          status.textContent = "Uploaded successfully!";
+          status.style.color = "limegreen";
+        })
+        .catch(err => {
+          console.error(err);
+          status.textContent = "Upload failed: " + err.message;
+          status.style.color = "red";
         });
-      }
-    } catch (err) {
-      console.error("Failed to load user info:", err.message);
-      alert("❌ Failed to load dashboard: " + err.message);
     }
-  });
 
-  // Expose upload function globally
-  window.uploadProfilePic = uploadProfilePic;
-</script>
+    function logoutUser() {
+      auth.signOut().then(() => window.location.href = "login.html");
+    }
 
+    window.uploadProfilePic = uploadProfilePic;
+    window.logoutUser = logoutUser;
 
+    auth.onAuthStateChanged(async user => {
+      if (!user) return window.location.href = "login.html";
+
+      try {
+        const doc = await db.collection("users").doc(user.uid).get();
+        if (!doc.exists) throw new Error("User not found.");
+        const data = doc.data();
+
+        document.getElementById("memberName").textContent = data.name || "N/A";
+        document.getElementById("memberEmail").textContent = data.email || "N/A";
+        document.getElementById("memberPackage").textContent = data.package || "N/A";
+
+        if (data.profilePicURL) {
+          document.getElementById("profilePic").src = data.profilePicURL;
+        }
+
+        const pkg = (data.package || "").toLowerCase().replace(/\s+/g, "");
+        document.getElementById("downloadLinks").innerHTML = `
+          <a href="plans/${pkg}/diet.pdf" class="btn" download>🍎 Diet Plan</a>
+          <a href="plans/${pkg}/workout.pdf" class="btn" download>💪 Workout Plan</a>
+        `;
+
+        const snapshot = await db.collection("notifications")
+          .where("email", "==", user.email)
+          .limit(5).get();
+
+        const list = document.getElementById("notificationList");
+        list.innerHTML = "";
+
+        if (snapshot.empty) {
+          list.innerHTML = "<li>No notifications yet.</li>";
+        } else {
+          snapshot.forEach(doc => {
+            const li = document.createElement("li");
+            li.textContent = doc.data().message;
+            list.appendChild(li);
+          });
+        }
+
+        animateCount("statSessions", 0, 24, 1500);
+        animateCount("statCalories", 0, 7200, 1500);
+        animateCount("statDays", 0, 45, 1500);
+      } catch (err) {
+        console.error(err);
+        alert("❌ " + err.message);
+      }
+    });
+  </script>
 </body>
 </html>

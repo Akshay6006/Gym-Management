@@ -7,10 +7,17 @@ function loginUser() {
 
   auth.signInWithEmailAndPassword(email, password)
     .then(async (userCredential) => {
-      const doc = await db.collection("users").doc(userCredential.user.uid).get();
+      const user = userCredential.user;
+      const doc = await db.collection("users").doc(user.uid).get();
+
+      if (!doc.exists) {
+        throw new Error("❌ User document not found in Firestore.");
+      }
+
       const role = doc.data().role;
       errorBox.style.color = "green";
       errorBox.textContent = "Login successful! Redirecting...";
+
       setTimeout(() => {
         if (role === "admin") {
           window.location.href = "index.html";
@@ -24,6 +31,7 @@ function loginUser() {
       errorBox.textContent = error.message;
     });
 }
+
 
 function registerUser() {
   const name = document.getElementById("name").value.trim();
@@ -40,25 +48,28 @@ function registerUser() {
   }
 
   auth.createUserWithEmailAndPassword(email, password)
-    .then(userCredential => {
-      const uid = userCredential.user.uid;
-      return db.collection("users").doc(uid).set({
-        name,
-        email,
-        phone,
+    .then(cred => {
+      const user = cred.user;
+      return db.collection("users").doc(user.uid).set({
+        name: name,
+        email: email,
+        phone: phone,
         package: packageType,
         role: "member",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     })
     .then(() => {
-      status.style.color = "limegreen";
-      status.textContent = "🎉 Account created! Redirecting...";
-      setTimeout(() => window.location.href = "login.html", 1500);
+      status.style.color = "green";
+      status.textContent = "✅ Signup successful! Redirecting...";
+      setTimeout(() => {
+        window.location.href = "member-dashboard.html";
+      }, 1500);
     })
-    .catch(error => {
-      status.textContent = "❌ " + error.message;
+    .catch(err => {
+      console.error("Error during sign up:", err.message);
       status.style.color = "red";
+      status.textContent = "❌ " + err.message;
     });
 }
 

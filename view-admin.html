@@ -1,0 +1,71 @@
+<!-- view-admins.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>View Admins - Gym Management</title>
+  <link rel="stylesheet" href="css/style-clean.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo">Gym Admin Panel</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="admin.html">Add Member</a>
+        <a href="member.html">Manage Members</a>
+        <a href="bill.html">Generate Bills</a>
+        <a href="view-bills.html">View Bills</a>
+        <a href="notify.html">Notify</a>
+        <a href="#" onclick="logoutUser()">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="overlay">
+    <div class="card login-card" style="max-width: 800px;">
+      <h2 style="text-align: center;">All Admins</h2>
+      <table style="width:100%; color: white;" id="adminsTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    auth.onAuthStateChanged(user => {
+      if (!user) return (window.location.href = "login.html");
+
+      db.collection("users")
+        .where("role", "==", "admin")
+        .get()
+        .then(snapshot => {
+          const tbody = document.querySelector("#adminsTable tbody");
+          tbody.innerHTML = "";
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${data.name}</td>
+              <td>${data.email}</td>
+              <td>${data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : ''}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        });
+    });
+  </script>
+</body>
+</html>
